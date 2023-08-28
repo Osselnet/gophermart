@@ -27,4 +27,7 @@ func main() {
 
 	s := server.New(h.GetRouter(), cfg.Addr)
 	go s.Serve()
+
+	queue := gophermart.NewQueue(st, cfg.AccrualSystemAddress)
+	queue.Start()
 }

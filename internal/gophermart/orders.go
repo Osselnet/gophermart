@@ -15,6 +15,19 @@ const (
 	StatusProcessed  = "PROCESSED"
 )
 
+func isValidStatus(status string) bool {
+	switch status {
+	case StatusNew:
+	case StatusProcessing:
+	case StatusProcessed:
+	case StatusInvalid:
+	default:
+		return false
+	}
+
+	return true
+}
+
 type Order struct {
 	ID         uint64
 	UserID     uint64

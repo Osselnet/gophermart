@@ -13,6 +13,8 @@ var (
 	ErrOrderAlreadyLoadedByAnotherUser = errors.New("the order number has already been uploaded by another user")
 	ErrOrderInvalidFormat              = errors.New("invalid order number format")
 
-	ErrNoContent      = errors.New("no content")
+	ErrTooManyRequests = errors.New("too many requests")
+	ErrNoContent       = errors.New("no content")
+
 	ErrNotEnoughFunds = errors.New("not enough funds on account")
 )
