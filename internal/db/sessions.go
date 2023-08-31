@@ -13,9 +13,8 @@ const (
 	queryCreateTableSessions = `
 			CREATE TABLE ` + tableNameSessions + ` (
 				user_id bigint NOT NULL,
-				current bigint NOT NULL,
-				withdrawn bigint NOT NULL,
-				PRIMARY KEY (user_id)
+				token varchar NOT NULL, 
+				expiry time NOT NULL
 			);
 		`
 	sessionsInsert = "INSERT INTO " + tableNameSessions + " (user_id, token, expiry) VALUES ($1, $2, $3)"
