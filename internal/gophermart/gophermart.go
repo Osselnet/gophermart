@@ -98,7 +98,7 @@ func (g *GopherMart) GetOrders(userID uint64) ([]*OrderProxy, error) {
 		return nil, err
 	}
 
-	layout := "2020-12-09T16:09:53+03:00"
+	layout := "2006-01-02T15:04:05-07:00"
 
 	orsPr := make([]*OrderProxy, 0)
 	for _, o := range ors {
@@ -141,7 +141,7 @@ func (g *GopherMart) GetWithdrawals(userID uint64) ([]*WithdrawProxy, error) {
 		return nil, err
 	}
 
-	wdsPr := make([]*WithdrawProxy, len(wds))
+	wdsPr := make([]*WithdrawProxy, 0)
 	for _, v := range wds {
 		wpr := &WithdrawProxy{
 			Order:       fmt.Sprint(v.OrderID),

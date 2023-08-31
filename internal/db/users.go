@@ -23,7 +23,7 @@ const (
 	usersDelete     = "DELETE FROM " + tableNameUsers + " WHERE login=$1"
 )
 
-func (s *StorageDb) initUsers(ctx context.Context) error {
+func (s *StorageDB) initUsers(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, "select * from "+tableNameUsers+";")
 	if err != nil {
 		_, err = s.db.ExecContext(ctx, queryCreateTableUsers)
@@ -42,7 +42,7 @@ func (s *StorageDb) initUsers(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageDb) initUsersStatements() error {
+func (s *StorageDB) initUsersStatements() error {
 	var err error
 	var stmt *sql.Stmt
 
@@ -81,7 +81,7 @@ func (s *StorageDb) initUsersStatements() error {
 	return nil
 }
 
-func (s *StorageDb) AddUser(u *gophermart.User) (uint64, error) {
+func (s *StorageDB) AddUser(u *gophermart.User) (uint64, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return 0, err
@@ -126,7 +126,7 @@ func (s *StorageDb) AddUser(u *gophermart.User) (uint64, error) {
 	return u.ID, nil
 }
 
-func (s *StorageDb) GetUser(byKey interface{}) (*gophermart.User, error) {
+func (s *StorageDB) GetUser(byKey interface{}) (*gophermart.User, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -164,7 +164,7 @@ func (s *StorageDb) GetUser(byKey interface{}) (*gophermart.User, error) {
 	return &u, nil
 }
 
-func (s *StorageDb) DeleteUser(login string) error {
+func (s *StorageDB) DeleteUser(login string) error {
 	res, err := s.stmts["usersDelete"].ExecContext(s.ctx, login)
 	if err != nil {
 		return err

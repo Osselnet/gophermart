@@ -69,16 +69,8 @@ func (h *handler) postWithdraw(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	cl := r.Header.Get("Content-Length")
-	if cl != "0" {
-		err = fmt.Errorf("wrong content length")
-		h.error(w, r, err, http.StatusBadRequest)
-		return
-	}
-
 	c, err := h.authCheck(w, r)
 	if err != nil {
-		// 401 — пользователь не авторизован
 		return
 	}
 	u, err := h.gm.Users.Get(c.UserID)

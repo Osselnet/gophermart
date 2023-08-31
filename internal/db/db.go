@@ -10,7 +10,7 @@ import (
 
 const initTimeOut = 60 * time.Second
 
-type StorageDb struct {
+type StorageDB struct {
 	db     *sql.DB
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -18,14 +18,14 @@ type StorageDb struct {
 	stmts  map[string]*sql.Stmt
 }
 
-func New(dsn string) (*StorageDb, error) {
+func New(dsn string) (*StorageDB, error) {
 	if dsn == "" {
 		return nil, fmt.Errorf("database DSN needed")
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	s := &StorageDb{
+	s := &StorageDB{
 		ctx:    ctx,
 		cancel: cancel,
 		dsn:    dsn,
@@ -40,7 +40,7 @@ func New(dsn string) (*StorageDb, error) {
 	return s, nil
 }
 
-func (s *StorageDb) init(dsn string) error {
+func (s *StorageDB) init(dsn string) error {
 	var err error
 	s.db, err = sql.Open("pgx", dsn)
 	if err != nil {

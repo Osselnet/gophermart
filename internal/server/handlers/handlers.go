@@ -48,7 +48,7 @@ func New(gm *gophermart.GopherMart) *handler {
 
 		r.Get("/balance", h.getBalance)
 		r.Post("/balance/withdraw", h.postWithdraw)
-		r.Get("/balance/withdrawals", h.getWithdrawals)
+		r.Get("/withdrawals", h.getWithdrawals)
 	})
 
 	return h

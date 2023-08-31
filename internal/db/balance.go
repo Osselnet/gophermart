@@ -23,7 +23,7 @@ const (
 	balanceUpdate = "UPDATE " + tableNameBalance + " SET current = $2, withdrawn = $3 WHERE user_id = $1"
 )
 
-func (s *StorageDb) initBalance(ctx context.Context) error {
+func (s *StorageDB) initBalance(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, "select * from "+tableNameBalance+";")
 	if err != nil {
 		_, err = s.db.ExecContext(ctx, queryCreateTableBalance)
@@ -42,7 +42,7 @@ func (s *StorageDb) initBalance(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageDb) initBalanceStatements() error {
+func (s *StorageDB) initBalanceStatements() error {
 	var err error
 	var stmt *sql.Stmt
 
@@ -73,7 +73,7 @@ func (s *StorageDb) initBalanceStatements() error {
 	return nil
 }
 
-func (s *StorageDb) GetBalance(userID uint64) (*gophermart.Balance, error) {
+func (s *StorageDB) GetBalance(userID uint64) (*gophermart.Balance, error) {
 	b := &gophermart.Balance{}
 
 	row := s.stmts["balanceGet"].QueryRowContext(s.ctx, userID)
@@ -88,7 +88,7 @@ func (s *StorageDb) GetBalance(userID uint64) (*gophermart.Balance, error) {
 	return b, nil
 }
 
-func (s *StorageDb) UpdateBalance(b *gophermart.Balance) error {
+func (s *StorageDB) UpdateBalance(b *gophermart.Balance) error {
 	result, err := s.stmts["balanceUpdate"].ExecContext(s.ctx, b.UserID, b.Current, b.Withdrawn)
 	if err != nil {
 		return fmt.Errorf("failed to update user balance - %w", err)

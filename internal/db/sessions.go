@@ -23,7 +23,7 @@ const (
 	sessionsDelete = "DELETE FROM " + tableNameSessions + " WHERE token=$1"
 )
 
-func (s *StorageDb) initSessions(ctx context.Context) error {
+func (s *StorageDB) initSessions(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, "select * from "+tableNameSessions+";")
 	if err != nil {
 		_, err = s.db.ExecContext(ctx, queryCreateTableSessions)
@@ -42,7 +42,7 @@ func (s *StorageDb) initSessions(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageDb) initSessionsStatements() error {
+func (s *StorageDB) initSessionsStatements() error {
 	stmt, err := s.db.PrepareContext(
 		s.ctx, sessionsInsert,
 	)
@@ -70,7 +70,7 @@ func (s *StorageDb) initSessionsStatements() error {
 	return nil
 }
 
-func (s *StorageDb) AddSession(session *gophermart.Session) error {
+func (s *StorageDB) AddSession(session *gophermart.Session) error {
 	_, err := s.stmts["sessionsInsert"].ExecContext(s.ctx, session.UserID, session.Token, session.Expiry)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s *StorageDb) AddSession(session *gophermart.Session) error {
 	return nil
 }
 
-func (s *StorageDb) GetSession(token string) (*gophermart.Session, error) {
+func (s *StorageDB) GetSession(token string) (*gophermart.Session, error) {
 	session := &gophermart.Session{}
 	row := s.stmts["sessionsGet"].QueryRowContext(s.ctx, token)
 	err := row.Scan(&session.UserID, &session.Token, &session.Expiry)
@@ -93,7 +93,7 @@ func (s *StorageDb) GetSession(token string) (*gophermart.Session, error) {
 	return session, nil
 }
 
-func (s *StorageDb) DeleteSession(token string) error {
+func (s *StorageDB) DeleteSession(token string) error {
 	res, err := s.stmts["sessionsDelete"].ExecContext(s.ctx, token)
 	if err != nil {
 		return err

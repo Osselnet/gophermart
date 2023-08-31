@@ -47,7 +47,6 @@ func (h *handler) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// создадим куку со сроком годности
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   session.Token,
@@ -86,7 +85,6 @@ func (h *handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// создадим куку со сроком годности
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   session.Token,
@@ -112,7 +110,6 @@ func (h *handler) logout(w http.ResponseWriter, r *http.Request) {
 		h.log(r, LogLvlError, fmt.Sprintf("failed to delete session - %s", err))
 	}
 
-	// установим протухший срок действия куки клиента
 	http.SetCookie(w, &http.Cookie{
 		Name:    "session_token",
 		Value:   "",
@@ -150,7 +147,6 @@ func (h *handler) authCheck(w http.ResponseWriter, r *http.Request) (*gophermart
 	}
 	sessionToken := c.Value
 
-	// получим сессию из хранилища по токену
 	session, err := h.gm.Sessions.Get(sessionToken)
 	if err != nil {
 		err = fmt.Errorf("session token is not present")
@@ -158,7 +154,6 @@ func (h *handler) authCheck(w http.ResponseWriter, r *http.Request) (*gophermart
 		return nil, err
 	}
 
-	// Удаляем сессию и выходим, если прошёл срок годности
 	if session.IsExpired() {
 		h.gm.Sessions.Delete(sessionToken)
 		err = fmt.Errorf("session has expired")

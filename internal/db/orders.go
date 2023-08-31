@@ -29,7 +29,7 @@ const (
 	ordersGetForPool = "SELECT * FROM " + tableNameOrders + " WHERE status='NEW' or status='PROCESSING' order by uploaded_at LIMIT $1"
 )
 
-func (s *StorageDb) initOrders(ctx context.Context) error {
+func (s *StorageDB) initOrders(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, "select * from "+tableNameOrders+";")
 	if err != nil {
 		_, err = s.db.ExecContext(ctx, queryCreateTable)
@@ -48,7 +48,7 @@ func (s *StorageDb) initOrders(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageDb) initOrdersStatements() error {
+func (s *StorageDB) initOrdersStatements() error {
 	var err error
 	var stmt *sql.Stmt
 
@@ -103,7 +103,7 @@ func (s *StorageDb) initOrdersStatements() error {
 	return nil
 }
 
-func (s *StorageDb) AddOrder(o *gophermart.Order) error {
+func (s *StorageDB) AddOrder(o *gophermart.Order) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -142,7 +142,7 @@ func (s *StorageDb) AddOrder(o *gophermart.Order) error {
 	return gophermart.ErrOrderAlreadyLoadedByAnotherUser
 }
 
-func (s *StorageDb) GetOrder(orderID uint64) (*gophermart.Order, error) {
+func (s *StorageDB) GetOrder(orderID uint64) (*gophermart.Order, error) {
 	o := &gophermart.Order{}
 	accrual := new(sql.NullInt64)
 	date := new(string)
@@ -167,7 +167,7 @@ func (s *StorageDb) GetOrder(orderID uint64) (*gophermart.Order, error) {
 	return o, nil
 }
 
-func (s *StorageDb) GetUserOrders(id uint64) ([]*gophermart.Order, error) {
+func (s *StorageDB) GetUserOrders(id uint64) ([]*gophermart.Order, error) {
 	orders := make([]*gophermart.Order, 0)
 
 	rows, err := s.stmts["ordersGetForUser"].QueryContext(s.ctx, id)
@@ -203,7 +203,7 @@ func (s *StorageDb) GetUserOrders(id uint64) ([]*gophermart.Order, error) {
 	return orders, nil
 }
 
-func (s *StorageDb) GetPullOrders(limit uint32) (map[uint64]*gophermart.Order, error) {
+func (s *StorageDB) GetPullOrders(limit uint32) (map[uint64]*gophermart.Order, error) {
 	orders := make(map[uint64]*gophermart.Order)
 
 	rows, err := s.stmts["ordersGetForPool"].QueryContext(s.ctx, limit)
@@ -239,7 +239,7 @@ func (s *StorageDb) GetPullOrders(limit uint32) (map[uint64]*gophermart.Order, e
 	return orders, nil
 }
 
-func (s *StorageDb) UpdateOrder(o *gophermart.Order) error {
+func (s *StorageDB) UpdateOrder(o *gophermart.Order) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err

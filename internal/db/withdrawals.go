@@ -25,7 +25,7 @@ const (
 	withdrawalsGetForUser = "SELECT * FROM " + tableNameWithdrawals + " WHERE user_id=$1 ORDER BY processed_at desc"
 )
 
-func (s *StorageDb) initWithdrawals(ctx context.Context) error {
+func (s *StorageDB) initWithdrawals(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, "select * from "+tableNameWithdrawals+";")
 	if err != nil {
 		_, err = s.db.ExecContext(ctx, queryCreateTableWithdrawals)
@@ -44,7 +44,7 @@ func (s *StorageDb) initWithdrawals(ctx context.Context) error {
 	return nil
 }
 
-func (s *StorageDb) initWithdrawalsStatements() error {
+func (s *StorageDB) initWithdrawalsStatements() error {
 	var err error
 	var stmt *sql.Stmt
 
@@ -75,7 +75,7 @@ func (s *StorageDb) initWithdrawalsStatements() error {
 	return nil
 }
 
-func (s *StorageDb) AddWithdraw(withdraw *gophermart.Withdraw) error {
+func (s *StorageDB) AddWithdraw(withdraw *gophermart.Withdraw) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
@@ -134,7 +134,7 @@ func (s *StorageDb) AddWithdraw(withdraw *gophermart.Withdraw) error {
 	return fmt.Errorf("withdraw already recorded by another user")
 }
 
-func (s *StorageDb) GetUserWithdrawals(userID uint64) ([]*gophermart.Withdraw, error) {
+func (s *StorageDB) GetUserWithdrawals(userID uint64) ([]*gophermart.Withdraw, error) {
 	ws := make([]*gophermart.Withdraw, 0)
 
 	rows, err := s.stmts["withdrawalsGetForUser"].QueryContext(s.ctx, userID)
