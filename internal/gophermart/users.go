@@ -27,8 +27,8 @@ type Users struct {
 	byID    map[uint64]*User
 }
 
-func newUsers(st Storer) *Users {
-	return &Users{
+func newUsers(st Storer) Users {
+	return Users{
 		storage: st,
 		byLogin: make(map[string]*User),
 		byID:    make(map[uint64]*User),

@@ -1,7 +1,8 @@
 package gophermart
 
 import (
-	"github.com/Osselnet/gophermart.git/pkg/tool"
+	"fmt"
+	"github.com/Osselnet/gophermart.git/pkg/luhn"
 	"strconv"
 	"time"
 )
@@ -45,18 +46,22 @@ func (ws *withdrawals) GetWithdrawals(userID uint64) ([]*Withdraw, error) {
 
 func (ws *withdrawals) Add(withdraw *Withdraw) error {
 	strOrderID := strconv.Itoa(int(withdraw.OrderID))
-	if !tool.IsValid(strOrderID) {
+	if !luhn.IsValid(strOrderID) {
 		return ErrOrderInvalidFormat
+	}
+
+	wds, _ := ws.linker.storage.GetOrderWithdrawals(withdraw.OrderID)
+	if wds != nil {
+		if wds.UserID == withdraw.UserID {
+			return fmt.Errorf("withdraw already recorded by this user")
+		}
+		return fmt.Errorf("withdraw already recorded by another user")
 	}
 
 	err := ws.linker.storage.AddWithdraw(withdraw)
 	if err != nil {
 		return err
 	}
-
-	ws.linker.Balances.mu.Lock()
-	delete(ws.linker.Balances.byUserID, withdraw.UserID)
-	ws.linker.Balances.mu.Unlock()
 
 	return nil
 }

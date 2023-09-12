@@ -6,19 +6,19 @@ import (
 	"fmt"
 	"github.com/Osselnet/gophermart.git/internal/gophermart"
 	"log"
+	"strconv"
 	"time"
 )
 
 const (
 	tableNameOrders  = "orders"
 	queryCreateTable = `
-			CREATE TABLE ` + tableNameOrders + ` (
-				id bigint NOT NULL,
+			CREATE TABLE IF NOT EXISTS ` + tableNameOrders + ` (
+				id varchar NOT NULL UNIQUE PRIMARY KEY,
 				user_id bigint NOT NULL,
 				status char(256) NOT NULL, 
 				accrual bigint,
-				uploaded_at timestamp NOT NULL, 
-				PRIMARY KEY (id)
+				uploaded_at timestamp NOT NULL
 			);
 		`
 	ordersInsert     = "INSERT INTO " + tableNameOrders + " (id, user_id, status, uploaded_at) VALUES ($1, $2, $3, $4)"
@@ -117,11 +117,11 @@ func (s *StorageDB) AddOrder(o *gophermart.Order) error {
 	date := new(string)
 	accrual := new(sql.NullInt64)
 
-	row := txGetByID.QueryRowContext(s.ctx, o.ID)
+	row := txGetByID.QueryRowContext(s.ctx, strconv.Itoa(int(o.ID)))
 	err = row.Scan(&order.ID, &order.UserID, &order.Status, accrual, date)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			_, err = txInsert.ExecContext(s.ctx, o.ID, o.UserID, o.Status, o.UploadedAt)
+			_, err = txInsert.ExecContext(s.ctx, strconv.Itoa(int(o.ID)), o.UserID, o.Status, o.UploadedAt)
 			if err != nil {
 				return err
 			}
@@ -135,10 +135,6 @@ func (s *StorageDB) AddOrder(o *gophermart.Order) error {
 
 		return err
 	}
-
-	if order.UserID == o.UserID {
-		return gophermart.ErrOrderAlreadyLoadedByUser
-	}
 	return gophermart.ErrOrderAlreadyLoadedByAnotherUser
 }
 
@@ -147,7 +143,7 @@ func (s *StorageDB) GetOrder(orderID uint64) (*gophermart.Order, error) {
 	accrual := new(sql.NullInt64)
 	date := new(string)
 
-	row := s.stmts["orderGetByID"].QueryRowContext(s.ctx, orderID)
+	row := s.stmts["orderGetByID"].QueryRowContext(s.ctx, strconv.Itoa(int(orderID)))
 	err := row.Scan(&o.ID, &o.UserID, &o.Status, accrual, date)
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("order not found - %w", err)
@@ -168,7 +164,7 @@ func (s *StorageDB) GetOrder(orderID uint64) (*gophermart.Order, error) {
 }
 
 func (s *StorageDB) GetUserOrders(id uint64) ([]*gophermart.Order, error) {
-	orders := make([]*gophermart.Order, 0)
+	var orders []*gophermart.Order
 
 	rows, err := s.stmts["ordersGetForUser"].QueryContext(s.ctx, id)
 	if err != nil {
@@ -247,29 +243,21 @@ func (s *StorageDB) UpdateOrder(o *gophermart.Order) error {
 	defer tx.Rollback()
 
 	txUpdateOrder := tx.StmtContext(s.ctx, s.stmts["ordersUpdate"])
-	txUpdateBalance := tx.StmtContext(s.ctx, s.stmts["balanceUpdate"])
-	txGetBalance := tx.StmtContext(s.ctx, s.stmts["balanceGet"])
+	txUpdateBalance := tx.StmtContext(s.ctx, s.stmts["balanceUpdateCurrent"])
+	//txGetBalance := tx.StmtContext(s.ctx, s.stmts["balanceGet"])
 
 	if o.Status == gophermart.StatusProcessed {
-		_, err = txUpdateOrder.ExecContext(s.ctx, o.ID, o.Status, o.Accrual)
+		_, err = txUpdateOrder.ExecContext(s.ctx, strconv.Itoa(int(o.ID)), o.Status, o.Accrual)
 		if err != nil {
 			return fmt.Errorf("failed to update order - %w", err)
 		}
 
-		b := &gophermart.Balance{}
-		row := txGetBalance.QueryRowContext(s.ctx, o.UserID)
-		err = row.Scan(&b.UserID, &b.Current, &b.Withdrawn)
-		if err != nil {
-			return fmt.Errorf("failed to get user balance - %w", err)
-		}
-		current := b.Current + o.Accrual // прибавим начисленные баллы
-
-		_, err = txUpdateBalance.ExecContext(s.ctx, b.UserID, current, b.Withdrawn)
+		_, err = txUpdateBalance.ExecContext(s.ctx, o.UserID, o.Accrual)
 		if err != nil {
 			return fmt.Errorf("failed to update user balance - %w", err)
 		}
 	} else {
-		_, err = txUpdateOrder.ExecContext(s.ctx, o.ID, o.Status, o.Accrual)
+		_, err = txUpdateOrder.ExecContext(s.ctx, strconv.Itoa(int(o.ID)), o.Status, o.Accrual)
 		if err != nil {
 			return fmt.Errorf("failed to update order - %w", err)
 		}

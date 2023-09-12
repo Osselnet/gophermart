@@ -19,11 +19,11 @@ func (h *handler) postWithdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := h.authCheck(w, r)
-	if err != nil {
-		// 401 — пользователь не авторизован
+	c := h.getSessionFromReqContext(r)
+	if c == nil {
 		return
 	}
+
 	u, err := h.gm.Users.Get(c.UserID)
 	if err != nil {
 		h.error(w, r, fmt.Errorf("failed to get user by ID - %w", err), http.StatusInternalServerError)
@@ -69,10 +69,11 @@ func (h *handler) postWithdraw(w http.ResponseWriter, r *http.Request) {
 func (h *handler) getWithdrawals(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	c, err := h.authCheck(w, r)
-	if err != nil {
+	c := h.getSessionFromReqContext(r)
+	if c == nil {
 		return
 	}
+
 	u, err := h.gm.Users.Get(c.UserID)
 	if err != nil {
 		h.error(w, r, fmt.Errorf("failed to get user by ID - %w", err), http.StatusInternalServerError)

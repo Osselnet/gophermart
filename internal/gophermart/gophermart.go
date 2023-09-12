@@ -16,7 +16,7 @@ type Credentials struct {
 type GopherMart struct {
 	storage Storer
 
-	Users       *Users
+	Users       Users
 	Sessions    *sessions
 	Orders      *orders
 	Balances    *balances

@@ -2,9 +2,8 @@ package gophermart
 
 import (
 	"fmt"
-	"github.com/Osselnet/gophermart.git/pkg/tool"
+	"github.com/Osselnet/gophermart.git/pkg/luhn"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -15,7 +14,7 @@ const (
 	StatusProcessed  = "PROCESSED"
 )
 
-func isValidStatus(status string) bool {
+func IsValidStatus(status string) bool {
 	switch status {
 	case StatusNew:
 	case StatusProcessing:
@@ -49,20 +48,17 @@ func (op *OrderProxy) String() string {
 
 type orders struct {
 	linker *GopherMart
-	mu     sync.RWMutex
-	byID   map[uint64]*Order
 }
 
 func newOrders(linker *GopherMart) *orders {
 	return &orders{
 		linker: linker,
-		byID:   make(map[uint64]*Order),
 	}
 }
 
 func (os *orders) Add(orderID, userID uint64) error {
 	strOrderID := strconv.Itoa(int(orderID))
-	if !tool.IsValid(strOrderID) {
+	if !luhn.IsValid(strOrderID) {
 		return ErrOrderInvalidFormat
 	}
 
@@ -85,28 +81,13 @@ func (os *orders) Add(orderID, userID uint64) error {
 		return err
 	}
 
-	os.mu.Lock()
-	os.byID[orderID] = order
-	os.mu.Unlock()
-
 	return nil
 }
 
 func (os *orders) Get(orderID uint64) (*Order, error) {
-	var err error
-
-	os.mu.RLock()
-	o, ok := os.byID[orderID]
-	os.mu.RUnlock()
-	if !ok {
-		o, err = os.linker.storage.GetOrder(orderID)
-		if err != nil {
-			return nil, err
-		}
-
-		os.mu.Lock()
-		os.byID[orderID] = o
-		os.mu.Unlock()
+	o, err := os.linker.storage.GetOrder(orderID)
+	if err != nil {
+		return nil, err
 	}
 
 	return o, nil

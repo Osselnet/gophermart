@@ -121,8 +121,8 @@ func (h *handler) logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) welcome(w http.ResponseWriter, r *http.Request) {
-	session, err := h.authCheck(w, r)
-	if err != nil {
+	session := h.getSessionFromReqContext(r)
+	if session == nil {
 		return
 	}
 
@@ -132,34 +132,4 @@ func (h *handler) welcome(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Write([]byte(fmt.Sprintf("Welcome, #%d %s!", u.ID, u.Login)))
-}
-
-func (h *handler) authCheck(w http.ResponseWriter, r *http.Request) (*gophermart.Session, error) {
-	// извлечём токен сессии
-	c, err := r.Cookie("session_token")
-	if err != nil {
-		if err == http.ErrNoCookie {
-			h.error(w, r, gophermart.ErrUnauthorizedAccess, http.StatusUnauthorized)
-			return nil, gophermart.ErrUnauthorizedAccess
-		}
-		h.error(w, r, err, http.StatusBadRequest)
-		return nil, err
-	}
-	sessionToken := c.Value
-
-	session, err := h.gm.Sessions.Get(sessionToken)
-	if err != nil {
-		err = fmt.Errorf("session token is not present")
-		h.error(w, r, err, http.StatusUnauthorized)
-		return nil, err
-	}
-
-	if session.IsExpired() {
-		h.gm.Sessions.Delete(sessionToken)
-		err = fmt.Errorf("session has expired")
-		h.error(w, r, err, http.StatusUnauthorized)
-		return nil, err
-	}
-
-	return session, nil
 }

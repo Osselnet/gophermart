@@ -19,10 +19,8 @@ func (h *handler) postOrders(w http.ResponseWriter, r *http.Request) {
 		h.error(w, r, err, http.StatusBadRequest)
 		return
 	}
-
-	c, err := h.authCheck(w, r)
-	if err != nil {
-		// 401 — пользователь не авторизован
+	c := h.getSessionFromReqContext(r)
+	if c == nil {
 		return
 	}
 
@@ -75,12 +73,11 @@ func (h *handler) postOrders(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) getOrders(w http.ResponseWriter, r *http.Request) {
 	var err error
-
-	c, err := h.authCheck(w, r)
-	if err != nil {
-		// 401 — пользователь не авторизован
+	c := h.getSessionFromReqContext(r)
+	if c == nil {
 		return
 	}
+
 	u, err := h.gm.Users.Get(c.UserID)
 	if err != nil {
 		h.error(w, r, fmt.Errorf("failed to get user by ID - %w", err), http.StatusInternalServerError)

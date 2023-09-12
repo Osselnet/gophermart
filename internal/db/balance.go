@@ -11,16 +11,16 @@ import (
 const (
 	tableNameBalance        = "balance"
 	queryCreateTableBalance = `
-			CREATE TABLE ` + tableNameBalance + ` (
-				user_id bigint NOT NULL,
+			CREATE TABLE IF NOT EXISTS ` + tableNameBalance + ` (
+				user_id bigint PRIMARY KEY,
 				current bigint NOT NULL,
-				withdrawn bigint NOT NULL,
-				PRIMARY KEY (user_id)
+				withdrawn bigint NOT NULL
 			);
 		`
-	balanceInsert = "INSERT INTO " + tableNameBalance + " (user_id, current, withdrawn) VALUES ($1, 0, 0)"
-	balanceGet    = "SELECT * FROM " + tableNameBalance + " WHERE user_id=$1"
-	balanceUpdate = "UPDATE " + tableNameBalance + " SET current = $2, withdrawn = $3 WHERE user_id = $1"
+	balanceInsert        = "INSERT INTO " + tableNameBalance + " (user_id, current, withdrawn) VALUES ($1, 0, 0)"
+	balanceGet           = "SELECT * FROM " + tableNameBalance + " WHERE user_id=$1"
+	balanceUpdate        = "UPDATE " + tableNameBalance + " SET current = $2, withdrawn = $3 WHERE user_id = $1"
+	balanceUpdateCurrent = "UPDATE " + tableNameBalance + " SET current = current+$2 WHERE user_id = $1"
 )
 
 func (s *StorageDB) initBalance(ctx context.Context) error {
@@ -70,19 +70,27 @@ func (s *StorageDB) initBalanceStatements() error {
 	}
 	s.stmts["balanceUpdate"] = stmt
 
+	stmt, err = s.db.PrepareContext(
+		s.ctx, balanceUpdateCurrent,
+	)
+	if err != nil {
+		return err
+	}
+	s.stmts["balanceUpdateCurrent"] = stmt
+
 	return nil
 }
 
-func (s *StorageDB) GetBalance(userID uint64) (*gophermart.Balance, error) {
-	b := &gophermart.Balance{}
+func (s *StorageDB) GetBalance(userID uint64) (gophermart.Balance, error) {
+	b := gophermart.Balance{}
 
 	row := s.stmts["balanceGet"].QueryRowContext(s.ctx, userID)
 	err := row.Scan(&b.UserID, &b.Current, &b.Withdrawn)
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("user balance not found - %w", err)
+		return b, fmt.Errorf("user balance not found - %w", err)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user balance - %w", err)
+		return b, fmt.Errorf("failed to get user balance - %w", err)
 	}
 
 	return b, nil

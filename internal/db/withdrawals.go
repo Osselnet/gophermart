@@ -6,18 +6,18 @@ import (
 	"fmt"
 	"github.com/Osselnet/gophermart.git/internal/gophermart"
 	"log"
+	"strconv"
 	"time"
 )
 
 const (
 	tableNameWithdrawals        = "withdrawals"
 	queryCreateTableWithdrawals = `
-			CREATE TABLE ` + tableNameWithdrawals + ` (
-				order_id bigint NOT NULL,
+			CREATE TABLE IF NOT EXISTS ` + tableNameWithdrawals + ` (
+				order_id varchar NOT NULL UNIQUE PRIMARY KEY,
 				user_id bigint NOT NULL,
 				sum bigint NOT NULL,
-				processed_at timestamp NOT NULL, 
-				PRIMARY KEY (order_id)
+				processed_at timestamp NOT NULL
 			);
 		`
 	withdrawalsInsert     = "INSERT INTO " + tableNameWithdrawals + " (order_id, user_id, sum, processed_at) VALUES ($1, $2, $3, $4)"
@@ -109,11 +109,11 @@ func (s *StorageDB) AddWithdraw(withdraw *gophermart.Withdraw) error {
 
 	var bw gophermart.Withdraw
 	date := new(string)
-	row = txGetByID.QueryRowContext(s.ctx, withdraw.OrderID)
+	row = txGetByID.QueryRowContext(s.ctx, strconv.Itoa(int(withdraw.OrderID)))
 	err = row.Scan(&bw.OrderID, &bw.UserID, &bw.Sum, date)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			_, err = txInsertWithdrawal.ExecContext(s.ctx, withdraw.OrderID, withdraw.UserID, withdraw.Sum, time.Now())
+			_, err = txInsertWithdrawal.ExecContext(s.ctx, strconv.Itoa(int(withdraw.OrderID)), withdraw.UserID, withdraw.Sum, time.Now())
 			if err != nil {
 				return err
 			}
@@ -127,15 +127,11 @@ func (s *StorageDB) AddWithdraw(withdraw *gophermart.Withdraw) error {
 
 		return err
 	}
-
-	if withdraw.UserID == bw.UserID {
-		return fmt.Errorf("withdraw already recorded by this user")
-	}
 	return fmt.Errorf("withdraw already recorded by another user")
 }
 
 func (s *StorageDB) GetUserWithdrawals(userID uint64) ([]*gophermart.Withdraw, error) {
-	ws := make([]*gophermart.Withdraw, 0)
+	var ws []*gophermart.Withdraw
 
 	rows, err := s.stmts["withdrawalsGetForUser"].QueryContext(s.ctx, userID)
 	if err != nil {
@@ -163,4 +159,20 @@ func (s *StorageDB) GetUserWithdrawals(userID uint64) ([]*gophermart.Withdraw, e
 	}
 
 	return ws, nil
+}
+
+func (s *StorageDB) GetOrderWithdrawals(orderID uint64) (*gophermart.Withdraw, error) {
+	var bw gophermart.Withdraw
+	date := new(string)
+
+	row := s.stmts["withdrawalsGetByID"].QueryRowContext(s.ctx, strconv.Itoa(int(orderID)))
+	err := row.Scan(&bw.OrderID, &bw.UserID, &bw.Sum, date)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("order not found - %w", err)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get order - %w", err)
+	}
+
+	return &bw, nil
 }

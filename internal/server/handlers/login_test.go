@@ -73,7 +73,7 @@ func TestRegister(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			st, err := db.New("host=127.0.0.1 port=5432 dbname=bbb user=postgres password=password target_session_attrs=read-write")
+			st, err := db.New("postgresql://postgres:password@localhost/praktikum?sslmode=disable")
 			require.NoError(t, err)
 
 			gm := gophermart.New(st)

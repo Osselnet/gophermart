@@ -11,7 +11,7 @@ import (
 const (
 	tableNameSessions        = "sessions"
 	queryCreateTableSessions = `
-			CREATE TABLE ` + tableNameSessions + ` (
+			CREATE TABLE IF NOT EXISTS ` + tableNameSessions + ` (
 				user_id bigint NOT NULL,
 				token varchar NOT NULL, 
 				expiry time NOT NULL

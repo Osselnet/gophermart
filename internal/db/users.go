@@ -11,7 +11,7 @@ import (
 const (
 	tableNameUsers        = "users"
 	queryCreateTableUsers = `
-			CREATE TABLE ` + tableNameUsers + ` (
+			CREATE TABLE IF NOT EXISTS ` + tableNameUsers + ` (
 				id serial PRIMARY KEY,
 				login varchar NOT NULL, 
 				password bytea NOT NULL

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Osselnet/gophermart.git/internal/gophermart"
+	"github.com/Osselnet/gophermart.git/internal/server/middleware/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log"
@@ -41,14 +42,19 @@ func New(gm *gophermart.GopherMart) *handler {
 		r.Post("/register", h.register)
 		r.Post("/login", h.login)
 		r.Get("/logout", h.logout)
-		r.Get("/welcome", h.welcome)
 
-		r.Post("/orders", h.postOrders)
-		r.Get("/orders", h.getOrders)
+		r.Group(func(r chi.Router) {
+			r.Use(auth.AuthCheck(gm))
 
-		r.Get("/balance", h.getBalance)
-		r.Post("/balance/withdraw", h.postWithdraw)
-		r.Get("/withdrawals", h.getWithdrawals)
+			r.Get("/welcome", h.welcome)
+
+			r.Post("/orders", h.postOrders)
+			r.Get("/orders", h.getOrders)
+
+			r.Get("/balance", h.getBalance)
+			r.Post("/balance/withdraw", h.postWithdraw)
+			r.Get("/withdrawals", h.getWithdrawals)
+		})
 	})
 
 	return h
@@ -96,4 +102,12 @@ func (h *handler) error(w http.ResponseWriter, r *http.Request, err error, statu
 	w.WriteHeader(statusCode)
 	w.Write(b)
 	log.Println(prefix, e)
+}
+
+func (h *handler) getSessionFromReqContext(req *http.Request) *gophermart.Session {
+	session, ok := req.Context().Value("session").(*gophermart.Session)
+	if !ok {
+		return nil
+	}
+	return session
 }

@@ -15,7 +15,8 @@ type Storer interface {
 	GetUserOrders(userID uint64) ([]*Order, error)
 	UpdateOrder(*Order) error
 
-	GetBalance(userID uint64) (*Balance, error)
+	GetBalance(userID uint64) (Balance, error)
 	AddWithdraw(*Withdraw) error
 	GetUserWithdrawals(userID uint64) ([]*Withdraw, error)
+	GetOrderWithdrawals(orderID uint64) (*Withdraw, error)
 }

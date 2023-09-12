@@ -1,7 +1,5 @@
 package gophermart
 
-import "sync"
-
 type Balance struct {
 	UserID    uint64
 	Current   uint64
@@ -14,34 +12,15 @@ type BalanceProxy struct {
 }
 
 type balances struct {
-	linker   *GopherMart
-	mu       sync.RWMutex
-	byUserID map[uint64]*Balance
+	linker *GopherMart
 }
 
 func newBalance(linker *GopherMart) *balances {
 	return &balances{
-		linker:   linker,
-		byUserID: make(map[uint64]*Balance),
+		linker: linker,
 	}
 }
 
-func (bs *balances) Get(userID uint64) (*Balance, error) {
-	var err error
-
-	bs.mu.RLock()
-	b, ok := bs.byUserID[userID]
-	bs.mu.RUnlock()
-	if !ok {
-		b, err = bs.linker.storage.GetBalance(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		bs.mu.Lock()
-		bs.byUserID[userID] = b
-		bs.mu.Unlock()
-	}
-
-	return b, nil
+func (bs *balances) Get(userID uint64) (Balance, error) {
+	return bs.linker.storage.GetBalance(userID)
 }
