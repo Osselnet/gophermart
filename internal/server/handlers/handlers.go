@@ -105,7 +105,7 @@ func (h *handler) error(w http.ResponseWriter, r *http.Request, err error, statu
 }
 
 func (h *handler) getSessionFromReqContext(req *http.Request) *gophermart.Session {
-	session, ok := req.Context().Value("session").(*gophermart.Session)
+	session, ok := req.Context().Value(auth.SessionKey{}).(*gophermart.Session)
 	if !ok {
 		return nil
 	}
